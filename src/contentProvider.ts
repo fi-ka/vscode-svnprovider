@@ -13,7 +13,7 @@ export class SvnContentProvider {
     
     async provideTextDocumentContent(uri: Uri): Promise<string> {
         try {
-            return await this.svn.get_original_file_content(uri.fsPath);
+            return await this.svn.getOriginalFileContent(uri.fsPath);
         } catch (err) {
             return '';
         }

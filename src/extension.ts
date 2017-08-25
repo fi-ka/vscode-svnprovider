@@ -9,7 +9,7 @@ async function init(context: ExtensionContext) {
     
     const outputChannel = window.createOutputChannel('SvnProvider');
     const svn = new Svn(outputChannel);
-    const version = await svn.get_version();
+    const version = await svn.getVersion();
 
     outputChannel.appendLine("Using SVN version: " + version)
 

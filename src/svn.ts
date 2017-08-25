@@ -9,16 +9,16 @@ export class Svn {
         this.outputChannel = outputChannel;
     }        
 
-    async get_version(): Promise<string> {
-        return await this._exec(["--version", "-q"]);
+    async getVersion(): Promise<string> {
+        return await this.exec(["--version", "-q"]);
     }
 
-    async get_original_file_content(path): Promise<string> {
-        return await this._exec(["cat", path]);
+    async getOriginalFileContent(path): Promise<string> {
+        return await this.exec(["cat", path]);
     }
 
-    async get_modified_files(): Promise<Uri[]> {
-        return await this._exec(["status", workspace.rootPath]).then((output: string) => {
+    async getModifiedFiles(): Promise<Uri[]> {
+        return await this.exec(["status", workspace.rootPath]).then((output: string) => {
             const modified_files: Uri[] = []
             const lines = output.split("\n");
             lines.forEach(line => {
@@ -32,7 +32,7 @@ export class Svn {
         });
     }
 
-    private _exec(args: string[], options: any = {}): Promise<string> {
+    private exec(args: string[], options: any = {}): Promise<string> {
        return new Promise<string>((c, e) => {
             const buffers: Buffer[] = [];
             const child = cp.spawn("svn", args, options);

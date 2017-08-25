@@ -27,7 +27,7 @@ export class SvnProvider {
     }
 
     updateWorkingCopyResourceState(svn: Svn) {
-        svn.get_modified_files().then((uris: Uri[]) => {
+        svn.getModifiedFiles().then((uris: Uri[]) => {
             const modified_resources = []
             uris.forEach(uri => {
                 const resource = new Resource();
