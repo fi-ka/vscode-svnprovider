@@ -1,0 +1,38 @@
+{
+    "name": "svnprovider",
+    "displayName": "SVN Provider",
+    "description": "",
+    "version": "0.0.1",
+    "publisher": "fika",
+    "engines": {
+        "vscode": "^1.11.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "*"
+    ],
+    "main": "./out/src/extension",
+    "contributes": {
+        "commands": [
+            {
+                "command": "svn.diffActiveDocument",
+                "title": "SVN Provider: Diff current file"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "tsc -p ./",
+        "compile": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "typescript": "^2.4.1",
+        "vscode": "^1.1.4",
+        "mocha": "^2.5.3",
+        "@types/node": "^6.0.82",
+        "@types/mocha": "^2.2.41"
+    }
+}
