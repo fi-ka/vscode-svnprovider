@@ -1,12 +1,12 @@
 import { scm, commands, Command, Disposable, SourceControl, SourceControlResourceDecorations,
     SourceControlResourceState, SourceControlResourceGroup, Uri } from "vscode";
 import { CommandCenter } from './commands'
-import { Svn } from './svn'
+import { Svn, FileStatus } from './svn'
 
 export class SvnProvider {
 
     private _sourceControl: SourceControl;
-    private workingCopy: SourceControlResourceGroup;
+    private workingCopyGroup: SourceControlResourceGroup;
     private disposables: Disposable[] = [];
 
     constructor(private svn: Svn) {
@@ -15,27 +15,29 @@ export class SvnProvider {
 
         this._sourceControl.quickDiffProvider = this;
 
-        this.workingCopy = this._sourceControl.createResourceGroup('workingCopy', "Changes");
+        this.workingCopyGroup = this._sourceControl.createResourceGroup('workingCopy', "Changes");
 
         const commandCenter = new CommandCenter()
         this.disposables.push(commands.registerCommand("svn.diffDocument", commandCenter.diffDocument, commandCenter));
         this.disposables.push(commands.registerCommand("svn.diffActiveDocument", commandCenter.diffActiveDocument, commandCenter));
-        this.disposables.push(this.workingCopy);
+        this.disposables.push(this.workingCopyGroup);
         
         this.updateWorkingCopyResourceState(svn)
         setInterval(() => { this.updateWorkingCopyResourceState(svn) }, 15000);
     }
 
     updateWorkingCopyResourceState(svn: Svn) {
-        svn.getModifiedFiles().then((uris: Uri[]) => {
-            const modified_resources = []
-            uris.forEach(uri => {
-                const resource = new Resource();
-                resource.resourceUri = uri;
-                resource.command = { command: "svn.diffDocument", title: "open", arguments: [resource.resourceUri] };
-                modified_resources.push(resource);
+        svn.getStatus().then((result: FileStatus[]) => {
+            const workingCopy = []
+            result.forEach(entry => {
+                if (entry.status == "M" || entry.status == "A") {
+                    const resource = new Resource();
+                    resource.resourceUri = entry.uri;
+                    resource.command = { command: "svn.diffDocument", title: "open", arguments: [resource.resourceUri] };
+                    workingCopy.push(resource);
+                }
             });
-            this.workingCopy.resourceStates = modified_resources;
+            this.workingCopyGroup.resourceStates = workingCopy;
         });
     }
 

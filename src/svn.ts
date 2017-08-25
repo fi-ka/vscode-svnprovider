@@ -1,6 +1,11 @@
 import { Uri, workspace } from 'vscode'
 import * as cp from 'child_process';
 
+export interface FileStatus {
+    status: string;
+    uri: Uri;
+}
+
 export class Svn {
 
     private outputChannel;
@@ -17,18 +22,20 @@ export class Svn {
         return await this.exec(["cat", path]);
     }
 
-    async getModifiedFiles(): Promise<Uri[]> {
+    async getStatus(): Promise<FileStatus[]> {
         return await this.exec(["status", workspace.rootPath]).then((output: string) => {
-            const modified_files: Uri[] = []
+            const result: FileStatus[] = []
             const lines = output.split("\n");
             lines.forEach(line => {
                 const flags = line.substr(0, 7);
                 const file = line.substr(8).trim();
-                if (flags[0] == 'M') {
-                    modified_files.push(Uri.file(file))
+                const entry: FileStatus = {
+                    uri: Uri.file(file),
+                    status: flags[0]
                 }
+                result.push(entry)
             });
-            return modified_files;
+            return result;
         });
     }
 
