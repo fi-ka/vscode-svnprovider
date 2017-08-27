@@ -1,18 +1,12 @@
 import { scm, commands, Command, Disposable, SourceControl, SourceControlResourceDecorations,
     SourceControlResourceState, SourceControlResourceGroup, Uri } from "vscode";
 import { CommandCenter } from './commands';
-import { Svn, FileStatus } from './svn';
-
-import * as path from 'path';
-
-const iconsRootPath = path.join(path.dirname(__dirname), '..', 'resources', 'icons');
-
-function getIconUri(iconName: string, theme: string): Uri {
-    return Uri.file(path.join(iconsRootPath, theme, `${iconName}.svg`));
-}
+import { Svn } from './svn';
+import { Model, Resource } from './model';
 
 export class SvnProvider {
-
+    
+    private model: Model;
     private _sourceControl: SourceControl;
     private workingCopyGroup: SourceControlResourceGroup;
     private disposables: Disposable[] = [];
@@ -30,26 +24,12 @@ export class SvnProvider {
         this.disposables.push(commands.registerCommand("svn.diffActiveDocument", commandCenter.diffActiveDocument, commandCenter));
         this.disposables.push(this.workingCopyGroup);
         
-        this.updateWorkingCopyResourceState();
-        setInterval(() => { this.updateWorkingCopyResourceState() }, 15000);
+        this.model = new Model(svn);
+        this.model.onDidChange(this.onDidModelChange, this, this.disposables);
     }
 
-    updateWorkingCopyResourceState() {
-        this.svn.getStatus().then((result: FileStatus[]) => {
-            const workingCopy = [];
-            result.forEach(entry => {
-                switch(entry.status) {
-                    case "M":
-                    case "A":
-                        const resource = new Resource(entry.uri, entry.status);
-                        workingCopy.push(resource);
-                        break;
-                    default:
-                        //Skip files with other statuses for now.
-                }
-            });
-            this.workingCopyGroup.resourceStates = workingCopy;
-        });
+    private onDidModelChange() {
+        this.workingCopyGroup.resourceStates = this.model.workingCopyResources;
     }
 
     provideOriginalResource(uri: Uri): Uri | undefined {
@@ -62,65 +42,5 @@ export class SvnProvider {
     dispose(): void {
         this.disposables.forEach((d) => d.dispose());
         this.disposables = [];
-    }
-}
-
-export class Resource implements SourceControlResourceState {
-
-    status: string;
-    resourceUri: Uri;
-
-    get command(): Command {
-        return {
-            command: "svn.diffDocument",
-            title: "open",
-            arguments: [this.resourceUri]
-        };
-    }
-
-    get decorations(): SourceControlResourceDecorations {
-        const light = { iconPath: this.getIconPath('light') };
-        const dark = { iconPath: this.getIconPath('dark') };
-
-        return {light, dark};
-    }
-
-    constructor(
-        resourceUri: Uri,
-        status: string
-    ){
-        this.resourceUri = resourceUri;
-        this.status = status;
-    }
-
-    private static Icons = {
-        light: {
-            Modified: getIconUri('status-modified', 'light'),
-            Added: getIconUri('status-added', 'light'),
-            Deleted: getIconUri('status-deleted', 'light'),
-            Renamed: getIconUri('status-renamed', 'light'),
-            Copied: getIconUri('status-copied', 'light'),
-            Untracked: getIconUri('status-untracked', 'light'),
-            Ignored: getIconUri('status-ignored', 'light'),
-            Conflict: getIconUri('status-conflict', 'light'),
-        },
-        dark: {
-            Modified: getIconUri('status-modified', 'dark'),
-            Added: getIconUri('status-added', 'dark'),
-            Deleted: getIconUri('status-deleted', 'dark'),
-            Renamed: getIconUri('status-renamed', 'dark'),
-            Copied: getIconUri('status-copied', 'dark'),
-            Untracked: getIconUri('status-untracked', 'dark'),
-            Ignored: getIconUri('status-ignored', 'dark'),
-            Conflict: getIconUri('status-conflict', 'dark')
-        }
-    };
-
-    private getIconPath(theme: string): Uri | undefined {
-        switch (this.status) {
-            case "M": return Resource.Icons[theme].Modified;
-            case "A": return Resource.Icons[theme].Added;
-            default: return void 0;
-        }
     }
 }
