@@ -20,6 +20,7 @@ export class SvnProvider {
         this.workingCopyGroup = this._sourceControl.createResourceGroup('workingCopy', "Changes");
 
         const commandCenter = new CommandCenter()
+        this.disposables.push(commands.registerCommand("svn.openResource", commandCenter.openResource, commandCenter));        
         this.disposables.push(commands.registerCommand("svn.diffDocument", commandCenter.diffDocument, commandCenter));
         this.disposables.push(commands.registerCommand("svn.diffActiveDocument", commandCenter.diffActiveDocument, commandCenter));
         this.disposables.push(this.workingCopyGroup);

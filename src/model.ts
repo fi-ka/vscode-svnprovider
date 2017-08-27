@@ -1,5 +1,5 @@
 import { Command, Event, EventEmitter, SourceControlResourceGroup, SourceControlResourceDecorations, SourceControlResourceState, Uri } from "vscode";
-import { Svn, FileStatus } from './svn'
+import { Svn, FileStatus } from './svn';
 import * as path from 'path';
 
 const iconsRootPath = path.join(path.dirname(__dirname), '..', 'resources', 'icons');
@@ -34,6 +34,8 @@ export class Model {
                     return workingCopy.push(new Resource(entry.uri, Status.MODIFIED));
                 case "A":
                     return workingCopy.push(new Resource(entry.uri, Status.ADDED));
+                case "D":
+                    return workingCopy.push(new Resource(entry.uri, Status.DELETED));
                 default:
                     return; //Skipping files with other statuses for now.
             }
@@ -58,17 +60,18 @@ export class Resource implements SourceControlResourceState {
 
     get command(): Command {
         return {
-            command: "svn.diffDocument",
+            command: "svn.openResource",
             title: "open",
-            arguments: [this.resourceUri]
+            arguments: [this]
         };
     }
 
     get decorations(): SourceControlResourceDecorations {
         const light = { iconPath: this.getIconPath('light') };
         const dark = { iconPath: this.getIconPath('dark') };
+        const strikeThrough = this.status === Status.DELETED;
 
-        return { light, dark };
+        return {strikeThrough, light, dark };
     }
 
     constructor(
@@ -106,6 +109,7 @@ export class Resource implements SourceControlResourceState {
         switch (this.status) {
             case Status.MODIFIED: return Resource.Icons[theme].Modified;
             case Status.ADDED: return Resource.Icons[theme].Added;
+            case Status.DELETED: return Resource.Icons[theme].Deleted;            
             default: return void 0;
         }
     }
