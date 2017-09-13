@@ -10,10 +10,17 @@ export class SvnContentProvider {
             workspace.registerTextDocumentContentProvider('svn', this)
         );
     }
-    
+
     async provideTextDocumentContent(uri: Uri): Promise<string> {
         try {
-            return await this.svn.getOriginalFileContent(uri.fsPath);
+            var rev;
+            if (uri.query !== '') {
+                rev = JSON.parse(uri.query).rev;
+            } else {
+                rev ='BASE';
+            }
+
+            return await this.svn.getOriginalFileContent(uri.fsPath, rev);
         } catch (err) {
             return '';
         }

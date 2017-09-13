@@ -19,6 +19,10 @@
             {
                 "command": "svn.diffActiveDocument",
                 "title": "SVN Provider: Diff current file"
+            },
+            {
+                "command": "svn.logActiveDocument",
+                "title": "SVN Provider: Log current file"
             }
         ]
     },
@@ -33,6 +37,7 @@
         "vscode": "^1.1.4",
         "mocha": "^2.5.3",
         "@types/node": "^6.0.82",
-        "@types/mocha": "^2.2.41"
+        "@types/mocha": "^2.2.41",
+        "xml2js":"^0.4.19"
     }
 }
