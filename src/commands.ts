@@ -1,4 +1,4 @@
-import { commands, OutputChannel,  SourceControlResourceState, Uri, QuickPickItem, window } from 'vscode';
+import { commands, OutputChannel,  SourceControlResourceState, Uri, QuickPickItem, QuickPickOptions, window } from 'vscode';
 import { Resource, Status } from './model';
 import { Svn, NodeLogEntry } from './svn';
 import * as path from 'path';
@@ -37,19 +37,19 @@ export class CommandCenter {
         const editor = window.activeTextEditor;
         if (editor != null) {
             const uri = editor.document.uri;
+            const fileName = path.basename(uri.fsPath);
             this.svn.getLog(uri.fsPath).then(logEntries => {
                 if (logEntries.length == 0) {
-                    window.showInformationMessage("No log recorded for " + uri.fsPath);
+                    window.showInformationMessage("No log recorded for " + fileName);
                 } else {
-                    this.createQuickPickList(logEntries).then((item) => {
-                        const selected = new Uri().with({path: item.entry.path, query: JSON.stringify({rev: item.entry.revision}), scheme: "svn"});
-                        const prev = selected.with({query: JSON.stringify({rev: (item.entry.revision - 1)})});
-                        const title = path.basename(item.entry.path) + " | r" + item.entry.revision;
-                        commands.executeCommand('vscode.diff', prev, selected, title);
-                    });
+                    return this.createQuickPickList(logEntries);
                 }
-            }, reason => {
-                window.showErrorMessage("Error showing svn log for " + path.basename(uri.fsPath));
+            }).then(item => {
+                if (typeof item != 'undefined')
+                    this.showLogItemDiff(item);
+            })
+            .catch(reason => {
+                window.showErrorMessage("Error showing svn log for " + fileName);
             });
         }
     }
@@ -61,7 +61,18 @@ export class CommandCenter {
             const description = entry.author
             pickItems.push({label, detail: entry.message, description, entry});
         });
-        return window.showQuickPick(pickItems);
+        const quickPickOptions: QuickPickOptions = {
+            matchOnDescription: true,
+            matchOnDetail: true,
+        };
+        return window.showQuickPick(pickItems, quickPickOptions);
+    }
+
+    private showLogItemDiff(item) {
+        const selected = new Uri().with({path: item.entry.path, query: JSON.stringify({rev: item.entry.revision}), scheme: "svn"});
+        const prev = selected.with({query: JSON.stringify({rev: (item.entry.revision - 1)})});
+        const title = path.basename(item.entry.path) + " | r" + item.entry.revision;
+        commands.executeCommand('vscode.diff', prev, selected, title);
     }
 }
 
