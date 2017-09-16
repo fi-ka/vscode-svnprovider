@@ -9,7 +9,7 @@ export interface FileStatus {
 export interface NodeLogEntry {
     author: string;
     message: string;
-    revision: string;
+    revision: number;
     path: string;
 }
 
@@ -54,7 +54,7 @@ export class Svn {
                 result.log.logentry.forEach(entry => {
                     entries.push({
                         author: entry.author[0],
-                        revision: entry.$.revision,
+                        revision: parseInt(entry.$.revision),
                         message: entry.msg[0],
                         path: path
                     })

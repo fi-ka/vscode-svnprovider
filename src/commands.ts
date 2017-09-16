@@ -36,18 +36,20 @@ export class CommandCenter {
     async logActiveDocument() {
         const editor = window.activeTextEditor;
         if (editor != null) {
-            this.svn.getLog(editor.document.uri.fsPath).then(logEntries => {
+            const uri = editor.document.uri;
+            this.svn.getLog(uri.fsPath).then(logEntries => {
                 if (logEntries.length == 0) {
-                    window.showInformationMessage("No log recorded for " + editor.document.uri.fsPath);
+                    window.showInformationMessage("No log recorded for " + uri.fsPath);
                 } else {
                     this.createQuickPickList(logEntries).then((item) => {
-                        var selected = new Uri().with({path: item.entry.path, query: JSON.stringify({rev: item.entry.revision}), scheme: "svn"});
-                        var prev = selected.with({query: JSON.stringify({rev: (parseInt(item.entry.revision) - 1)})});
-                        commands.executeCommand('vscode.diff', prev, selected);
+                        const selected = new Uri().with({path: item.entry.path, query: JSON.stringify({rev: item.entry.revision}), scheme: "svn"});
+                        const prev = selected.with({query: JSON.stringify({rev: (item.entry.revision - 1)})});
+                        const title = path.basename(item.entry.path) + " | r" + item.entry.revision;
+                        commands.executeCommand('vscode.diff', prev, selected, title);
                     });
                 }
-            }, (reason) => {
-                window.showErrorMessage("Could not show log for " + editor.document.uri.fsPath);
+            }, reason => {
+                window.showErrorMessage("Error showing svn log for " + path.basename(uri.fsPath));
             });
         }
     }
@@ -55,7 +57,7 @@ export class CommandCenter {
     private createQuickPickList(logEntries) {
         var pickItems: LogQuickPickItem[] = [];
         logEntries.forEach(entry => {
-            const label = "$" + entry.revision;
+            const label = "r" + entry.revision;
             const description = entry.author
             pickItems.push({label, detail: entry.message, description, entry});
         });
