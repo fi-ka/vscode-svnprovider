@@ -46,8 +46,12 @@ export class Svn {
         });
     }
 
-    async getLog(path): Promise<NodeLogEntry[]> {
-        return await this.exec(["log", path, "--xml"]).then((output: string) => {
+    async getLog(path, limit?: number): Promise<NodeLogEntry[]> {
+        var args = ["log", path, "--xml"];
+        if (typeof limit != 'undefined') {
+            args.push("-l", limit);
+        }
+        return await this.exec(args).then((output: string) => {
             const entries: NodeLogEntry[] = [];
             const parseString = require('xml2js').parseString;
             parseString(output, (err, result) => {

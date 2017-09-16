@@ -38,7 +38,7 @@ export class CommandCenter {
         if (editor != null) {
             const uri = editor.document.uri;
             const fileName = path.basename(uri.fsPath);
-            this.svn.getLog(uri.fsPath).then(logEntries => {
+            this.svn.getLog(uri.fsPath, 20).then(logEntries => {
                 if (logEntries.length == 0) {
                     window.showInformationMessage("No log recorded for " + fileName);
                 } else {
