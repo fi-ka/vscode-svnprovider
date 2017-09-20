@@ -33,34 +33,45 @@ export class CommandCenter {
         }
     }
 
-    async logActiveDocument() {
+    async showLogForActiveDocument(showAll=false) {
         const editor = window.activeTextEditor;
         if (editor != null) {
             const uri = editor.document.uri;
             const fileName = path.basename(uri.fsPath);
-            this.svn.getLog(uri.fsPath, 20).then(logEntries => {
+            const limit = showAll ? null : 20;
+            this.svn.getLog(uri.fsPath, limit).then(logEntries => {
                 if (logEntries.length == 0) {
                     window.showInformationMessage("No log recorded for " + fileName);
                 } else {
-                    return this.createQuickPickList(logEntries);
+                    return this.createQuickPickList(logEntries, limit);
                 }
             }).then(item => {
                 if (typeof item != 'undefined')
-                    this.showLogItemDiff(item);
-            })
-            .catch(reason => {
+                {
+                    if (item.label === "Show All") {
+                        this.showLogForActiveDocument(showAll=true)
+                    } else {
+                        this.showLogItemDiff(item);
+                    }
+                }
+            }).catch(reason => {
                 window.showErrorMessage("Error showing svn log for " + fileName);
+                console.log("Error: " + reason);
             });
         }
     }
 
-    private createQuickPickList(logEntries) {
+    private createQuickPickList(logEntries, limit) {
         var pickItems: LogQuickPickItem[] = [];
         logEntries.forEach(entry => {
-            const label = "r" + entry.revision;
-            const description = entry.author
-            pickItems.push({label, detail: entry.message, description, entry});
+            const label = entry.message;
+            const description = "r" + entry.revision;
+            const detail = entry.author;
+            pickItems.push({label, detail, description, entry});
         });
+        if (limit != null && limit == pickItems.length) {
+            pickItems.push({label: "Show All", description: "Show all svn log entries."});
+        }
         const quickPickOptions: QuickPickOptions = {
             matchOnDescription: true,
             matchOnDetail: true,
@@ -79,6 +90,6 @@ export class CommandCenter {
 class LogQuickPickItem implements QuickPickItem {
     label: string;
     description: string;
-    detail: string;
-    entry: NodeLogEntry;
+    detail?: string;
+    entry?: NodeLogEntry;
 }

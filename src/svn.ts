@@ -46,9 +46,9 @@ export class Svn {
         });
     }
 
-    async getLog(path, limit?: number): Promise<NodeLogEntry[]> {
+    async getLog(path, limit: number=null): Promise<NodeLogEntry[]> {
         var args = ["log", path, "--xml"];
-        if (typeof limit != 'undefined') {
+        if (limit != null) {
             args.push("-l", limit);
         }
         return await this.exec(args).then((output: string) => {

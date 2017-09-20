@@ -26,7 +26,7 @@ export class SvnProvider {
         this.disposables.push(commands.registerCommand("svn.openResource", commandCenter.openResource, commandCenter));
         this.disposables.push(commands.registerCommand("svn.diffDocument", commandCenter.diffDocument, commandCenter));
         this.disposables.push(commands.registerCommand("svn.diffActiveDocument", commandCenter.diffActiveDocument, commandCenter));
-        this.disposables.push(commands.registerCommand("svn.logActiveDocument", commandCenter.logActiveDocument, commandCenter));
+        this.disposables.push(commands.registerCommand("svn.logActiveDocument", commandCenter.showLogForActiveDocument, commandCenter));
         this.disposables.push(this.workingCopyGroup);
 
         this.model = new Model(svn);

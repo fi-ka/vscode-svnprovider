@@ -18,11 +18,11 @@
         "commands": [
             {
                 "command": "svn.diffActiveDocument",
-                "title": "SVN Provider: Diff current file"
+                "title": "SVN Provider: View File Diff"
             },
             {
                 "command": "svn.logActiveDocument",
-                "title": "SVN Provider: Log current file"
+                "title": "SVN Provider: View File Log"
             }
         ]
     },
