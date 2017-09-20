@@ -1,4 +1,4 @@
-import { commands, OutputChannel,  SourceControlResourceState, Uri, QuickPickItem, QuickPickOptions, window } from 'vscode';
+import { commands, env, OutputChannel,  SourceControlResourceState, Uri, QuickPickItem, QuickPickOptions, window } from 'vscode';
 import { Resource, Status } from './model';
 import { Svn, NodeLogEntry } from './svn';
 import * as path from 'path';
@@ -38,7 +38,7 @@ export class CommandCenter {
         if (editor != null) {
             const uri = editor.document.uri;
             const fileName = path.basename(uri.fsPath);
-            const limit = showAll ? null : 20;
+            const limit = showAll ? null : 10;
             this.svn.getLog(uri.fsPath, limit).then(logEntries => {
                 if (logEntries.length == 0) {
                     window.showInformationMessage("No log recorded for " + fileName);
@@ -65,9 +65,9 @@ export class CommandCenter {
         var pickItems: LogQuickPickItem[] = [];
         logEntries.forEach(entry => {
             const label = entry.message;
-            const description = "r" + entry.revision;
-            const detail = entry.author;
-            pickItems.push({label, detail, description, entry});
+            const revision = "r" + entry.revision;
+            const detail = revision + " | " + entry.author + " | " + this.formatDate(entry.date);
+            pickItems.push({label, detail, description: "", entry});
         });
         if (limit != null && limit == pickItems.length) {
             pickItems.push({label: "Show All", description: "Show all svn log entries."});
@@ -84,6 +84,11 @@ export class CommandCenter {
         const prev = selected.with({query: JSON.stringify({rev: (item.entry.revision - 1)})});
         const title = path.basename(item.entry.path) + " | r" + item.entry.revision;
         commands.executeCommand('vscode.diff', prev, selected, title);
+    }
+
+    private formatDate(date: Date) {
+        const dateOptions = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: 'numeric' };
+        return date.toLocaleString(env.language, dateOptions);
     }
 }
 

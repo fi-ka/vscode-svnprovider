@@ -10,6 +10,7 @@ export interface NodeLogEntry {
     author: string;
     message: string;
     revision: number;
+    date: Date;
     path: string;
 }
 
@@ -59,7 +60,8 @@ export class Svn {
                     entries.push({
                         author: entry.author[0],
                         revision: parseInt(entry.$.revision),
-                        message: entry.msg[0],
+                        message: entry.msg[0].replace(new RegExp("[\r\n]+", "g"), " "),
+                        date: new Date(entry.date[0]),
                         path: path
                     })
                 });
