@@ -21,6 +21,7 @@ export class Model {
         const fsWatcher = workspace.createFileSystemWatcher('**');
         const onWorkingCopyChange = anyEvent(fsWatcher.onDidChange, fsWatcher.onDidCreate, fsWatcher.onDidDelete);
         onWorkingCopyChange(this.updateWorkingCopyResourceState, this, this.disposables);
+        this.updateWorkingCopyResourceState();
         this.disposables.push(fsWatcher);
     }
 
