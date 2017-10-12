@@ -1,5 +1,7 @@
-import { Command, Event, EventEmitter, SourceControlResourceGroup, SourceControlResourceDecorations, SourceControlResourceState, Uri } from "vscode";
+import { Command, Disposable, Event, EventEmitter, SourceControlResourceGroup, SourceControlResourceDecorations, SourceControlResourceState, Uri, workspace } from "vscode";
 import { Svn, FileStatus } from './svn';
+import { anyEvent } from './util';
+import { debounce, throttle } from './decorators'
 import * as path from 'path';
 
 const iconsRootPath = path.join(path.dirname(__dirname), '..', 'resources', 'icons');
@@ -11,19 +13,25 @@ function getIconUri(iconName: string, theme: string): Uri {
 export class Model {
     workingCopyResources: SourceControlResourceState[];
 
+    private disposables: Disposable[] = [];
     private _onDidChange = new EventEmitter<void>();
     readonly onDidChange: Event<void> = this._onDidChange.event;
 
     constructor(private svn: Svn) {
-        this.updateWorkingCopyResourceState()        
-        setInterval(() => {this.updateWorkingCopyResourceState();}, 15000);
+        const fsWatcher = workspace.createFileSystemWatcher('**');
+        const onWorkingCopyChange = anyEvent(fsWatcher.onDidChange, fsWatcher.onDidCreate, fsWatcher.onDidDelete);
+        onWorkingCopyChange(this.updateWorkingCopyResourceState, this, this.disposables);
+        this.disposables.push(fsWatcher);
     }
 
-    private updateWorkingCopyResourceState() {
+    @debounce(1000)
+    @throttle
+    private async updateWorkingCopyResourceState() {
         this.svn.getStatus().then((result: FileStatus[]) => {
             this.workingCopyResources = this.parseStatus(result);
-            this._onDidChange.fire()        
+            this._onDidChange.fire()
         });
+        await new Promise(c => setTimeout(c, 10000));
     }
 
     private parseStatus(svnStatus: FileStatus[]): Resource[] {
@@ -41,6 +49,11 @@ export class Model {
             }
         });
         return workingCopy;
+    }
+
+    dispose(): void {
+        this.disposables.forEach((d) => d.dispose());
+        this.disposables = [];
     }
 }
 
@@ -109,7 +122,7 @@ export class Resource implements SourceControlResourceState {
         switch (this.status) {
             case Status.MODIFIED: return Resource.Icons[theme].Modified;
             case Status.ADDED: return Resource.Icons[theme].Added;
-            case Status.DELETED: return Resource.Icons[theme].Deleted;            
+            case Status.DELETED: return Resource.Icons[theme].Deleted;
             default: return void 0;
         }
     }
